@@ -1,0 +1,1 @@
+const miningReward = 100;
