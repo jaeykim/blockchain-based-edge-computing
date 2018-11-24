@@ -1,32 +1,31 @@
+const { randomBytes } = require('crypto');
+const secp256k1 = require('secp256k1');
 var merkle = require('merkle');
 var Block = require('./Block.js');
 var Transaction = require('./Transaction.js');
-var Engine = require('./core/Engine.js');
+const { coinbase, mining_reward_address, db_host, db_name } = require('./config.js');
 
 // Blockchain class defines the data structure of the full (validating) node
 // in the blockchain network, as well as the APIs to make use of the system.
-const coinbase = new Array(64).join('0');
-
 class Blockchain {
-	constructor(miningRewardAddress) {
+	constructor(mining_reward_address) {
 		// Blockchain
 		this.chain = [this.createGenesisBlock()];
-		this.engine = new Engine(this, 'blockchain');
 
 		// Reward for miner
-        this.coinbase = coinbase;
-		this.miningReward = 100;
-		this.miningRewardAddress = miningRewardAddress;
+    this.coinbase = coinbase;
+		this.mining_reward = 100;
+		this.mining_reward_address = mining_reward_address;
 
 		// Memory Pool for storing pending transactions
-		this.memPool = [
-			new Transaction(0, this.coinbase, this.miningRewardAddress, false, this.miningReward, null, null)
+		this.mem_pool = [
+			new Transaction(0, this.coinbase, this.mining_reward_address, false, this.mining_reward, null, null)
 		];
 	}
 
 	createGenesisBlock(date) {
-        if (date) return new Block(0, date, [], "Genesis block", 3);
-        else return new Block(0, new Date(), coinbase, coinbase, "Genesis block", 3);
+        if (date) return new Block(0, date, this.coinbase, undefined, undefined, undefined, "Genesis block", 3);
+        else return new Block(0, new Date(), this.coinbase, undefined, undefined, undefined, "Genesis block", 3);
 	}
 
 	getLatestBlock() {
@@ -34,28 +33,28 @@ class Blockchain {
 	}
 
 	createTransaction(transaction) {
-		this.memPool.push(transaction);
+		this.mem_pool.push(transaction);
 	}
 
 	// Debug
 	getMemPoolState() {
-		for (const tx in this.memPool) {
-			console.log(this.memPool[tx]);
+		for (const tx in this.mem_pool) {
+			console.log(this.mem_pool[tx]);
 		}
 	}
 
 	minePendingTransactions() {
 		let latestBlock = this.getLatestBlock(); // latestBlock -> ?????
 		// Create new block with all pending transactions and mine it..
-		let block = new Block(this.chain.length, Date.now(), this.memPool, latestBlock.hash, latestBlock.difficulty);
+		let block = new Block(this.chain.length, Date.now(), this.mem_pool, latestBlock.hash, latestBlock.difficulty);
 		block.mineBlock();
 
 		// Add the newly mined block to the chain
 		this.chain.push(block);
 
 		// Reset the pending transactions and send the mining reward
-		this.memPool = [
-			new Transaction(0, this.coinbase, this.miningRewardAddress, false, this.miningReward, null, null)
+		this.mem_pool = [
+			new Transaction(0, this.coinbase, this.mining_reward_address, false, this.mining_reward, null, null)
 		];
 	}
 
