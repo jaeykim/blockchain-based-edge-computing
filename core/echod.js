@@ -5,6 +5,7 @@ const shell = require("shelljs");
 
 //var Blockchain = require('./BLockchain.js');
 const { mining_reward_address } = require('./config.js');
+console.log(`mining reward address: ${mining_reward_address}`);
 
 const init = () => {
     console.log(
